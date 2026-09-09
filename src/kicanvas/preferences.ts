@@ -10,6 +10,7 @@ import type { Constructor } from "../base/types";
 import type { KCUIElement } from "../kc-ui";
 import type { Theme } from "../kicad";
 import themes from "./themes";
+import { deserialize_theme, serialize_theme } from "./themes/serialization";
 
 export class Preferences extends EventTarget {
     public static readonly INSTANCE = new Preferences();
@@ -21,14 +22,29 @@ export class Preferences extends EventTarget {
 
     public save() {
         this.storage.set("theme", this.theme.name);
+        // Persist the full theme (including any layer-color customizations)
+        // so it survives reloads and can be re-imported.
+        this.storage.set("customTheme", serialize_theme(this.theme));
         this.storage.set("alignControlsWithKiCad", this.alignControlsWithKiCad);
         this.dispatchEvent(new PreferencesChangeEvent({ preferences: this }));
     }
 
     public load() {
-        this.theme = themes.by_name(
-            this.storage.get("theme", themes.default.name),
-        );
+        const custom = this.storage.get("customTheme", null as string | null);
+        if (custom) {
+            try {
+                this.theme = deserialize_theme(custom);
+            } catch (e) {
+                console.warn("Unable to load custom theme", e);
+                this.theme = themes.by_name(
+                    this.storage.get("theme", themes.default.name),
+                );
+            }
+        } else {
+            this.theme = themes.by_name(
+                this.storage.get("theme", themes.default.name),
+            );
+        }
         this.alignControlsWithKiCad = this.storage.get(
             "alignControlsWithKiCad",
             false,

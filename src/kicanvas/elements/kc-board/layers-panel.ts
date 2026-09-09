@@ -11,8 +11,18 @@ import {
     type KCUIMenuItemElement,
     type KCUIPanelBodyElement,
 } from "../../../kc-ui";
-import { LayerNames, LayerSet } from "../../../viewers/board/layers";
+import { Color } from "../../../base/color";
+import {
+    LayerNames,
+    LayerSet,
+    layer_theme_key,
+    set_theme_color,
+    theme_color_for,
+} from "../../../viewers/board/layers";
 import { BoardViewer } from "../../../viewers/board/viewer";
+import { Preferences } from "../../preferences";
+
+const prefs = Preferences.INSTANCE;
 
 export class KCBoardLayersPanelElement extends KCUIElement {
     static override styles = [
@@ -54,6 +64,48 @@ export class KCBoardLayersPanelElement extends KCUIElement {
 
     @query("#presets", true)
     private presets_menu!: KCUIMenuElement;
+
+    #color_throttle = {
+        last: 0,
+        timer: 0,
+        pending: null as (() => void) | null,
+    };
+
+    private apply_layer_color(detail: { layer_name: string; color: string }) {
+        const key = layer_theme_key(detail.layer_name);
+        const existing = theme_color_for(prefs.theme.board, key);
+        set_theme_color(
+            prefs.theme.board,
+            key,
+            Color.from_css(detail.color).with_alpha(existing?.a ?? 1),
+        );
+        prefs.save();
+    }
+
+    /** Run fn at most once per second, trailing the most recent call. */
+    private throttle_color(fn: () => void) {
+        const interval = 1000;
+        const now = performance.now();
+        const elapsed = now - this.#color_throttle.last;
+
+        if (elapsed >= interval) {
+            this.#color_throttle.last = now;
+            this.#color_throttle.pending = null;
+            fn();
+            return;
+        }
+
+        this.#color_throttle.pending = fn;
+        if (!this.#color_throttle.timer) {
+            this.#color_throttle.timer = window.setTimeout(() => {
+                this.#color_throttle.timer = 0;
+                this.#color_throttle.last = performance.now();
+                const pending = this.#color_throttle.pending;
+                this.#color_throttle.pending = null;
+                pending?.();
+            }, interval - elapsed);
+        }
+    }
 
     override connectedCallback() {
         (async () => {
@@ -110,6 +162,22 @@ export class KCBoardLayersPanelElement extends KCUIElement {
                 this.presets_menu.deselect();
 
                 this.viewer.draw();
+            },
+        );
+
+        // Recolor a layer when its color picker changes. Colors are baked
+        // into the geometry, so applying a color triggers a full repaint via
+        // the preferences change event. Dragging on the palette fires this at
+        // a very high rate, so throttle the actual apply to 1 Hz (trailing
+        // the latest value so the final color always lands).
+        this.panel_body.addEventListener(
+            KCBoardLayerControlElement.color_event,
+            (e) => {
+                const detail = (e as CustomEvent).detail as {
+                    layer_name: string;
+                    color: string;
+                };
+                this.throttle_color(() => this.apply_layer_color(detail));
             },
         );
 
@@ -296,6 +364,19 @@ class KCBoardLayerControlElement extends KCUIElement {
                 width: 1em;
                 height: 1em;
                 margin-right: 0.5em;
+                padding: 0;
+                border: none;
+                background: none;
+                cursor: pointer;
+            }
+
+            .color::-webkit-color-swatch {
+                border: 1px solid var(--fg);
+                border-radius: 2px;
+            }
+
+            .color::-webkit-color-swatch-wrapper {
+                padding: 0;
             }
 
             .name {
@@ -353,6 +434,7 @@ class KCBoardLayerControlElement extends KCUIElement {
 
     static select_event = "kicanvas:layer-control:select";
     static visibility_event = "kicanvas:layer-control:visibility";
+    static color_event = "kicanvas:layer-control:color";
 
     override initialContentCallback() {
         super.initialContentCallback();
@@ -360,7 +442,14 @@ class KCBoardLayerControlElement extends KCUIElement {
         this.renderRoot.addEventListener("click", (e) => {
             e.stopPropagation();
 
-            const button = (e.target as HTMLElement)?.closest("button");
+            const target = e.target as HTMLElement;
+
+            // The color input handles its own interaction.
+            if (target.closest("input[type=color]")) {
+                return;
+            }
+
+            const button = target.closest("button");
             let event_name;
 
             // Visibility button clicked.
@@ -380,6 +469,21 @@ class KCBoardLayerControlElement extends KCUIElement {
                 }),
             );
         });
+
+        this.renderRoot.addEventListener("input", (e) => {
+            const input = e.target as HTMLInputElement;
+            if (input.type === "color") {
+                this.dispatchEvent(
+                    new CustomEvent(KCBoardLayerControlElement.color_event, {
+                        detail: {
+                            layer_name: this.layer_name,
+                            color: input.value,
+                        },
+                        bubbles: true,
+                    }),
+                );
+            }
+        });
     }
 
     @attribute({ type: String })
@@ -395,15 +499,25 @@ class KCBoardLayerControlElement extends KCUIElement {
     public layer_visible: boolean;
 
     override render() {
-        return html`<span
+        return html`<input
                 class="color"
-                style="background: ${this.layer_color};"></span>
+                type="color"
+                value="${css_to_hex(this.layer_color)}" />
             <span class="name">${this.layer_name}</span>
             <button type="button" name="${this.layer_name}">
                 <kc-ui-icon class="for-visible">visibility</kc-ui-icon>
                 <kc-ui-icon class="for-hidden">visibility_off</kc-ui-icon>
             </button>`;
     }
+}
+
+function css_to_hex(css: string): string {
+    const c = Color.from_css(css);
+    const h = (v: number) =>
+        Math.round(v * 255)
+            .toString(16)
+            .padStart(2, "0");
+    return `#${h(c.r)}${h(c.g)}${h(c.b)}`;
 }
 
 window.customElements.define(
