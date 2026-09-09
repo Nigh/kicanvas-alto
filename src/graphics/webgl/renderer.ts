@@ -37,7 +37,12 @@ export class WebGL2Renderer extends Renderer {
      * Create and configure the WebGL2 context.
      */
     override async setup() {
-        const gl = this.canvas.getContext("webgl2", { alpha: false });
+        // preserveDrawingBuffer is required for video export via
+        // canvas.captureStream(), which reads the buffer asynchronously.
+        const gl = this.canvas.getContext("webgl2", {
+            alpha: false,
+            preserveDrawingBuffer: true,
+        });
 
         if (gl == null) {
             throw new Error("Unable to create WebGL2 context");
