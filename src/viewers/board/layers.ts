@@ -516,7 +516,9 @@ export class LayerSet extends BaseLayerSet {
             (l) =>
                 l.name == layer_name ||
                 is_virtual_for(layer_name, l.name) ||
-                is_pad_layer_for(layer_name, l.name),
+                is_pad_layer_for(layer_name, l.name) ||
+                // Animation bucket layers belonging to this layer
+                l.name.startsWith(`${layer_name}@anim:`),
         );
 
         super.highlight(matching_layers);

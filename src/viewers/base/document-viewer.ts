@@ -48,6 +48,12 @@ export abstract class DocumentViewer<
 
     protected abstract create_painter(): PainterT;
     protected abstract create_layer_set(): ViewLayerSetT;
+
+    /** Called after the painter is created in paint(), before painting. */
+    protected on_painter_created(painter: PainterT) {}
+
+    /** Called after a new document has been loaded and painted. */
+    protected on_document_loaded() {}
     protected get grid_origin(): Vec2 {
         return new Vec2(0, 0);
     }
@@ -84,6 +90,8 @@ export abstract class DocumentViewer<
 
             // Draw
             this.draw();
+
+            this.on_document_loaded();
         });
     }
 
@@ -110,6 +118,7 @@ export abstract class DocumentViewer<
         // Paint the board
         log.info("Painting items");
         this.painter = this.create_painter();
+        this.on_painter_created(this.painter);
         this.painter.paint(this.document);
 
         // Paint the drawing sheet
