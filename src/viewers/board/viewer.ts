@@ -87,7 +87,7 @@ export class BoardViewer extends DocumentViewer<
         }
 
         this.#animation_timeline = timeline;
-        timeline.current_bucket = 0;
+        timeline.current_time = 0;
 
         this.paint();
         this.draw();
