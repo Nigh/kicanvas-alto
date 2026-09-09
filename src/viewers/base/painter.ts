@@ -81,7 +81,8 @@ export class DocumentPainter {
             }
 
             for (const layer_name of painter.layers_for(item)) {
-                this.layers.by_name(layer_name)?.items.push(item);
+                const target = this.layer_name_for(item, layer_name);
+                this.layers.by_name(target)?.items.push(item);
             }
         }
 
@@ -124,6 +125,15 @@ export class DocumentPainter {
 
     painter_for(item: any): ItemPainter | undefined {
         return this.painters.get(item.constructor);
+    }
+
+    /**
+     * Hook to redirect an item to a different layer than the painter
+     * requested. Used by the board layout animation to sort items into
+     * time-bucketed layers.
+     */
+    protected layer_name_for(item: unknown, layer_name: string): string {
+        return layer_name;
     }
 
     layers_for(item: any): string[] {

@@ -178,6 +178,24 @@ export class ViewLayerSet implements IDisposable {
     }
 
     /**
+     * Adds layers immediately after the named layer, keeping them adjacent
+     * to it in the rendering order.
+     */
+    add_after(existing_name: string, ...layers: ViewLayer[]) {
+        const index = this.#layer_list.findIndex(
+            (l) => l.name === existing_name,
+        );
+        if (index < 0) {
+            this.add(...layers);
+            return;
+        }
+        this.#layer_list.splice(index + 1, 0, ...layers);
+        for (const layer of layers) {
+            this.#layer_map.set(layer.name, layer);
+        }
+    }
+
+    /**
      * @yields layers in the order they were added (front to back), does not
      * include the overlay layer.
      */
