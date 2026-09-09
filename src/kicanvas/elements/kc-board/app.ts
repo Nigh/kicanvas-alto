@@ -14,6 +14,7 @@ import { KCBoardViewerElement } from "./viewer";
 import "../common/help-panel";
 import "../common/preferences-panel";
 import "../common/viewer-bottom-toolbar";
+import "./animation-panel";
 import "./footprints-panel";
 import "./info-panel";
 import "./layers-panel";
@@ -62,6 +63,13 @@ export class KCBoardAppElement extends KCViewerAppElement<KCBoardViewerElement> 
                 name="Footprints"
                 icon="memory">
                 <kc-board-footprints-panel></kc-board-footprints-panel>
+            </kc-ui-activity>`,
+            // Layout animation
+            html`<kc-ui-activity
+                slot="activities"
+                name="Animation"
+                icon="movie">
+                <kc-board-animation-panel></kc-board-animation-panel>
             </kc-ui-activity>`,
             // Nets
             html`<kc-ui-activity slot="activities" name="Nets" icon="hub">
