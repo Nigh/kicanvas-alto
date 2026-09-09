@@ -34,7 +34,7 @@ section.overlay {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: var(--gradient-purple-blue-dark);
+    background: var(--bg);
 }
 
 section.overlay h1 {
@@ -44,7 +44,7 @@ section.overlay h1 {
     justify-content: center;
     font-size: 5em;
     font-weight: 300;
-    text-shadow: 0 0 5px var(--gradient-purple-red);
+    text-shadow: 0 0 5px var(--color-primary);
 }
 
 section.overlay h1 img {
@@ -58,7 +58,7 @@ section.overlay p {
 }
 
 section.overlay strong {
-    background: var(--gradient-purple-red-highlight);
+    background: var(--color-primary);
     -webkit-background-clip: text;
     -moz-background-clip: text;
     background-clip: text;
@@ -66,26 +66,26 @@ section.overlay strong {
 }
 
 section.overlay a {
-    color: #81eeff;
+    color: var(--color-accent);
 }
 
 section.overlay a:hover {
-    color: #a3f3ff;
+    color: var(--color-secondary);
 }
 
 section.overlay input {
     font-size: 1.5em;
     color: var(--fg);
-    background: var(--gradient-purple-red);
+    background: var(--color-primary);
     max-width: 50%;
 }
 
 section.overlay input::placeholder {
-    color: var(--fg);
+    color: var(--color-primary-content);
 }
 
 section.overlay .link_button {
-    color: #81eeff;
+    color: var(--color-accent);
     background: transparent;
     font-size: 1em;
     font-weight: normal;

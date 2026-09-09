@@ -200,6 +200,45 @@ export function is_manufacturing_layer(name: string) {
     );
 }
 
+/**
+ * Map a physical layer name to its board-theme key. e.g. "F.Cu" ->
+ * "copper.f", "F.SilkS" -> "f_silks", "Edge.Cuts" -> "edge_cuts".
+ * Mirrors the key mapping in LayerSet.color_for.
+ */
+export function layer_theme_key(layer_name: string): string {
+    const name = layer_name
+        .replace(":Zones:", "")
+        .replace(".", "_")
+        .toLowerCase();
+    if (name.endsWith("_cu")) {
+        return `copper.${name.slice(0, -3)}`;
+    }
+    return name;
+}
+
+/** Read a color from a board theme by layer_theme_key(). */
+export function theme_color_for(
+    theme: BoardTheme,
+    key: string,
+): Color | undefined {
+    if (key.startsWith("copper.")) {
+        const copper = theme.copper as unknown as Record<string, Color>;
+        return copper[key.slice(7)];
+    }
+    const board = theme as unknown as Record<string, Color>;
+    return board[key];
+}
+
+/** Write a color into a board theme by layer_theme_key(). */
+export function set_theme_color(theme: BoardTheme, key: string, color: Color) {
+    if (key.startsWith("copper.")) {
+        const copper = theme.copper as unknown as Record<string, Color>;
+        copper[key.slice(7)] = color;
+    } else {
+        (theme as unknown as Record<string, Color>)[key] = color;
+    }
+}
+
 export function* copper_layers_between(
     start_layer_name: string,
     end_layer_name: string,

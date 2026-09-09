@@ -4,206 +4,134 @@
 :host {
     font-size: var(--font-size, 16px);
 
+    /* Xianii design tokens — https://github.com/Nigh/xianii-theme */
+    --color-base-100: oklch(26% 0 0);
+    --color-base-200: oklch(20% 0 0);
+    --color-base-300: oklch(37% 0 0);
+    --color-base-content: oklch(96% 0.001 286.375);
+    --color-primary: oklch(81% 0.117 11.638);
+    --color-primary-content: oklch(26% 0 0);
+    --color-secondary: oklch(82% 0.119 306.383);
+    --color-secondary-content: oklch(26% 0 0);
+    --color-accent: oklch(80% 0.08 185);
+    --color-accent-content: oklch(26% 0 0);
+    --color-neutral: #44403c;
+    --color-neutral-content: oklch(98% 0 0);
+
+    --radius-selector: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.5rem;
+    --border: 1px;
+
     --transition-time-very-short: 100ms;
     --transition-time-short: 200ms;
     --transition-time-medium: 500ms;
 
-    --bg: #131218;
-    --fg: #f8f8f0;
+    --bg: var(--color-base-100);
+    --fg: var(--color-base-content);
 
-    --tooltip-bg: #8864cb;
-    --tooltip-fg: #f8f8f0;
-    --tooltip-border: 1px solid #131218;
+    --tooltip-bg: var(--color-secondary);
+    --tooltip-fg: var(--color-secondary-content);
+    --tooltip-border: 1px solid var(--color-base-300);
 
-    --scrollbar-bg: #131218;
-    --scrollbar-fg: #ae81ff66;
-    --scrollbar-active-fg: #ae81ff;
-    --scrollbar-hover-bg: #ae81ffbb;
+    --scrollbar-bg: var(--color-base-200);
+    --scrollbar-fg: var(--color-secondary);
+    --scrollbar-active-fg: var(--color-primary);
+    --scrollbar-hover-bg: var(--color-primary);
 
-    --activity-bar-bg: #282634;
-    --activity-bar-fg: #f8f8f0;
-    --activity-bar-active-bg: #131218;
-    --activity-bar-active-fg: #f8f8f0;
+    --activity-bar-bg: var(--color-base-200);
+    --activity-bar-fg: var(--color-base-content);
+    --activity-bar-active-bg: var(--color-base-100);
+    --activity-bar-active-fg: var(--color-base-content);
 
-    --resizer-bg: #ae81ff;
-    --resizer-active-bg: #ae81ffbb;
+    --resizer-bg: var(--color-secondary);
+    --resizer-active-bg: var(--color-primary);
 
-    --panel-bg: #131218;
-    --panel-fg: #f8f8f0;
-    --panel-border: 2px solid #282634;
-    --panel-title-bg: #8077a8;
-    --panel-title-fg: #f8f8f0;
-    --panel-title-border: 1px solid #634e89;
+    --panel-bg: var(--color-base-100);
+    --panel-fg: var(--color-base-content);
+    --panel-border: 2px solid var(--color-base-300);
+    --panel-title-bg: var(--color-primary);
+    --panel-title-fg: var(--color-primary-content);
+    --panel-title-border: 1px solid var(--color-base-300);
     --panel-title-button-bg: transparent;
-    --panel-title-button-fg: #dcc8ff;
-    --panel-title-button-hover-bg: #ae81ff;
-    --panel-title-button-hover-fg: inherit;
+    --panel-title-button-fg: var(--color-primary-content);
+    --panel-title-button-hover-bg: var(--color-secondary);
+    --panel-title-button-hover-fg: var(--color-secondary-content);
     --panel-title-button-disabled-bg: inherit;
     --panel-title-button-disabled-fg: #888;
-    --panel-subtitle-bg: #634e89;
-    --panel-subtitle-fg: var(--panel-fg);
+    --panel-subtitle-bg: var(--color-secondary);
+    --panel-subtitle-fg: var(--color-secondary-content);
 
-    --dropdown-bg: #464258;
-    --dropdown-fg: #f8f8f0;
+    --dropdown-bg: var(--color-base-300);
+    --dropdown-fg: var(--color-base-content);
 
-    --button-bg: #81eeff;
-    --button-fg: #131218;
-    --button-hover-bg: #a3f3ff;
-    --button-hover-fg: #131218;
-    --button-focus-outline: 1px solid #ae81ff;
-    --button-selected-bg: #ae81ff;
-    --button-selected-fg: #131218;
-    --button-disabled-bg: #131218;
+    --button-bg: var(--color-primary);
+    --button-fg: var(--color-primary-content);
+    --button-hover-bg: var(--color-secondary);
+    --button-hover-fg: var(--color-secondary-content);
+    --button-focus-outline: 1px solid var(--color-accent);
+    --button-selected-bg: var(--color-secondary);
+    --button-selected-fg: var(--color-secondary-content);
+    --button-disabled-bg: var(--color-base-200);
     --button-disabled-fg: #888;
-    --button-success-bg: #64cb96;
-    --button-success-fg: #131218;
-    --button-success-hover-bg: #81ffbe;
-    --button-success-hover-fg: #131218;
-    --button-danger-bg: #cb6488;
-    --button-danger-fg: #131218;
-    --button-danger-hover-bg: #ff81ad;
-    --button-danger-hover-fg: #131218;
-    --button-outline-bg: #282634;
-    --button-outline-fg: #f8f8f0;
-    --button-outline-hover-bg: #282634;
-    --button-outline-hover-fg: #81eeff;
-    --button-outline-disabled-bg: #131218;
+    --button-success-bg: var(--color-accent);
+    --button-success-fg: var(--color-accent-content);
+    --button-success-hover-bg: var(--color-accent);
+    --button-success-hover-fg: var(--color-accent-content);
+    --button-danger-bg: oklch(70% 0.18 25);
+    --button-danger-fg: oklch(20% 0.02 25);
+    --button-danger-hover-bg: oklch(75% 0.18 25);
+    --button-danger-hover-fg: oklch(20% 0.02 25);
+    --button-outline-bg: var(--color-base-200);
+    --button-outline-fg: var(--color-base-content);
+    --button-outline-hover-bg: var(--color-base-200);
+    --button-outline-hover-fg: var(--color-accent);
+    --button-outline-disabled-bg: var(--color-base-200);
     --button-outline-disabled-fg: #888;
-    --button-toolbar-bg: #282634;
-    --button-toolbar-fg: #f8f8f0;
-    --button-toolbar-hover-bg: #282634;
-    --button-toolbar-hover-fg: #81eeff;
-    --button-toolbar-disabled-bg: #131218;
+    --button-toolbar-bg: var(--color-base-200);
+    --button-toolbar-fg: var(--color-base-content);
+    --button-toolbar-hover-bg: var(--color-base-200);
+    --button-toolbar-hover-fg: var(--color-accent);
+    --button-toolbar-disabled-bg: var(--color-base-200);
     --button-toolbar-disabled-fg: #888;
     --button-menu-bg: transparent;
-    --button-menu-fg: #f8f8f0;
+    --button-menu-fg: var(--color-base-content);
     --button-menu-hover-bg: transparent;
-    --button-menu-hover-fg: #81eeff;
+    --button-menu-hover-fg: var(--color-accent);
     --button-menu-disabled-bg: transparent;
     --button-menu-disabled-fg: #888;
 
-    --input-bg: #131218;
-    --input-fg: #f8f8f0;
-    --input-border: 1px solid #8077a8;
-    --input-accent: #ae81ff;
+    --input-bg: var(--color-base-200);
+    --input-fg: var(--color-base-content);
+    --input-border: 1px solid var(--color-base-300);
+    --input-accent: var(--color-primary);
     --input-hover-shadow: 1px 1px 10px 5px rgba(0, 0, 0, 0.2);
-    --input-focus-outline: 1px solid #ae81ff;
-    --input-placeholder: #8077a8;
-    --input-disabled-bg: #131218;
+    --input-focus-outline: 1px solid var(--color-accent);
+    --input-placeholder: var(--color-base-300);
+    --input-disabled-bg: var(--color-base-200);
     --input-disabled-fg: #888;
 
-    --input-range-bg: #8077a8;
-    --input-range-fg: #f8f8f0;
-    --input-range-hover-bg: #ae81ff;
-    --input-range-disabled-bg: #131218;
+    --input-range-bg: var(--color-base-300);
+    --input-range-fg: var(--color-primary);
+    --input-range-hover-bg: var(--color-secondary);
+    --input-range-disabled-bg: var(--color-base-200);
     --input-range-hover-shadow: 1px 1px 10px 5px rgba(0, 0, 0, 0.2);
     --input-range-handle-shadow: 1px 1px 5px 5px rgba(180, 180, 180, 0.2);
 
     --list-item-bg: var(--panel-bg);
     --list-item-fg: var(--panel-fg);
-    --list-item-active-bg: #634e89;
-    --list-item-active-fg: var(--list-item-fg);
-    --list-item-hover-bg: #64cb96;
-    --list-item-hover-fg: var(--list-item-bg);
+    --list-item-active-bg: var(--color-primary);
+    --list-item-active-fg: var(--color-primary-content);
+    --list-item-hover-bg: var(--color-accent);
+    --list-item-hover-fg: var(--color-accent-content);
     --list-item-disabled-bg: var(--list-item-bg);
     --list-item-disabled-fg: #888;
 
-    --grid-outline: #433e56;
-}
+    --grid-outline: var(--color-base-300);
 
-/*
-    Gradient theme
-*/
-:host {
-    --gradient-purple-green-light: linear-gradient(
-            190deg,
-            hsl(261deg 27% 42%) 0%,
-            hsl(243deg 27% 42%) 17%,
-            hsl(224deg 27% 42%) 33%,
-            hsl(205deg 27% 42%) 50%,
-            hsl(187deg 27% 42%) 67%,
-            hsl(168deg 27% 42%) 83%,
-            hsl(149deg 27% 42%) 100%
-        )
-        0 0 fixed;
-    --gradient-purple-blue-medium: linear-gradient(
-            190deg,
-            hsl(261deg 28% 30%) 0%,
-            hsl(248deg 30% 31%) 17%,
-            hsl(235deg 32% 32%) 33%,
-            hsl(222deg 34% 33%) 50%,
-            hsl(209deg 35% 34%) 67%,
-            hsl(197deg 37% 35%) 83%,
-            hsl(183deg 38% 36%) 100%
-        )
-        0 0 fixed;
-    --gradient-purple-blue-dark: linear-gradient(10deg, #111928, #1d162a) 0 0
-        fixed;
-    --gradient-cyan-blue-light: linear-gradient(
-            190deg,
-            hsl(183deg 63% 33%) 0%,
-            hsl(189deg 69% 30%) 17%,
-            hsl(194deg 74% 27%) 33%,
-            hsl(199deg 79% 24%) 50%,
-            hsl(203deg 85% 21%) 67%,
-            hsl(209deg 89% 18%) 83%,
-            hsl(214deg 95% 15%) 100%
-        )
-        0 0 fixed;
-    --gradient-purple-green-highlight: linear-gradient(
-            190deg,
-            hsl(261deg 27% 53%) 0%,
-            hsl(243deg 27% 52%) 17%,
-            hsl(224deg 27% 52%) 33%,
-            hsl(205deg 27% 51%) 50%,
-            hsl(186deg 27% 51%) 67%,
-            hsl(168deg 27% 50%) 83%,
-            hsl(149deg 27% 50%) 100%
-        )
-        0 0 fixed;
-    --gradient-purple-red: linear-gradient(90deg, #8864cb, #cb6488) 0 0 fixed;
-    --gradient-purple-red-highlight: linear-gradient(90deg, #b187ff, #ff80ac) 0
-        0 fixed;
-
-    --scrollbar-bg: var(--gradient-purple-blue-dark);
-    --scrollbar-fg: var(--gradient-purple-green-light);
-    --scrollbar-hover-fg: var(--scrollbar-fg);
-    --scrollbar-active-fg: var(--scrollbar-fg);
-
-    --activity-bar-bg: var(--gradient-purple-green-light);
-
-    --resizer-bg: var(--gradient-purple-blue-medium);
-    --resizer-active-bg: var(--gradient-purple-green-highlight);
-
-    --panel-bg: var(--gradient-purple-blue-dark);
-    --panel-title-bg: var(--gradient-purple-green-light);
-    --panel-subtitle-bg: var(--gradient-purple-blue-medium);
-
-    --button-toolbar-bg: var(--gradient-purple-blue-dark);
-    --button-toolbar-hover-bg: var(--gradient-purple-green-light);
-    --button-toolbar-hover-fg: #f8f8f0;
-    --button-toolbar-disabled-bg: var(--gradient-purple-blue-dark);
-
-    --button-toolbar-alt-bg: var(--gradient-purple-green-light);
-    --button-toolbar-alt-hover-bg: var(--gradient-purple-green-highlight);
-    --button-toolbar-alt-hover-fg: #f8f8f0;
-    --button-toolbar-alt-disabled-bg: var(--gradient-purple-blue-dark);
-
-    --dropdown-bg: var(--gradient-purple-green-light);
-    --dropdown-fg: #f8f8f0;
-    --dropdown-hover-bg: var(--gradient-purple-green-highlight);
-    --dropdown-hover-fg: #f8f8f0;
-    --dropdown-active-bg: var(--gradient-purple-blue-dark);
-    --dropdown-active-fg: #f8f8f0;
-
-    --input-range-bg: var(--gradient-purple-green-light);
-
-    --list-item-hover-bg: var(--gradient-purple-green-highlight);
-    --list-item-active-bg: var(--gradient-cyan-blue-light);
-
-    --focus-overlay-bg: var(--gradient-purple-green-light);
+    --focus-overlay-bg: var(--color-primary);
     --focus-overlay-opacity: 0.5;
-    --focus-overlay-fg: #f8f8f0;
+    --focus-overlay-fg: var(--color-primary-content);
 }
 
 /*

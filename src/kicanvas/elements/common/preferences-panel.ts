@@ -8,6 +8,8 @@ import { css, html, query } from "../../../base/web-components";
 import { KCUIElement } from "../../../kc-ui";
 import { Preferences } from "../../preferences";
 import themes from "../../themes";
+import { deserialize_theme, serialize_theme } from "../../themes/serialization";
+import { initiate_download } from "../../../base/dom/download";
 
 const prefs = Preferences.INSTANCE;
 
@@ -73,6 +75,49 @@ export class KCPreferencesPanel extends KCUIElement {
             }
             prefs.save();
         });
+
+        this.renderRoot.addEventListener("click", (e) => {
+            const button = (e.target as HTMLElement).closest("kc-ui-button");
+            if (!button) {
+                return;
+            }
+            switch (button.getAttribute("name")) {
+                case "export-theme":
+                    this.export_theme();
+                    break;
+                case "import-theme":
+                    this.import_theme();
+                    break;
+            }
+        });
+    }
+
+    private export_theme() {
+        const json = serialize_theme(prefs.theme);
+        initiate_download(
+            new File([json], "kicanvas-theme.json", {
+                type: "application/json",
+            }),
+        );
+    }
+
+    private import_theme() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json,application/json";
+        input.onchange = async () => {
+            const file = input.files?.[0];
+            if (!file) {
+                return;
+            }
+            try {
+                prefs.theme = deserialize_theme(await file.text());
+                prefs.save();
+            } catch (e) {
+                console.error("Unable to import theme", e);
+            }
+        };
+        input.click();
     }
 
     override render() {
@@ -96,6 +141,15 @@ export class KCPreferencesPanel extends KCUIElement {
                             </select>
                         </kc-ui-control>
                     </kc-ui-control-list>
+                    <kc-ui-control>
+                        <label>Color theme</label>
+                        <kc-ui-button name="export-theme"
+                            >Export theme JSON</kc-ui-button
+                        >
+                        <kc-ui-button name="import-theme"
+                            >Import theme JSON</kc-ui-button
+                        >
+                    </kc-ui-control>
                     <kc-ui-control>
                         <label>
                             <input

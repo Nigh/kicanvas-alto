@@ -1280,7 +1280,10 @@ export class BoardPainter extends DocumentPainter {
                 new ViewLayer(
                     this.layers,
                     name,
-                    () => parent.visible && timeline.current_bucket >= bucket,
+                    () =>
+                        parent.visible &&
+                        timeline.time_for_bucket(bucket) <=
+                            timeline.current_time,
                     parent.interactive,
                     parent.color,
                 ),

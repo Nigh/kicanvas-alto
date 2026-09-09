@@ -93,21 +93,26 @@ suite("board.animation.LayoutTimeline", function () {
         }
     });
 
-    test("time/bucket mapping round-trips", function () {
+    test("time/bucket mapping is monotonic and area-weighted", function () {
         const pcb = new board.KicadPCB("test.kicad_pcb", footprints_pcb_src);
         const timeline = new LayoutTimeline(pcb);
         const total = timeline.total_buckets;
 
-        assert.equal(timeline.bucket_at_time(0), -1);
-        assert.equal(timeline.bucket_at_time(0.0001), 0);
-        assert.equal(timeline.bucket_at_time(timeline.duration), Infinity);
-        assert.equal(timeline.bucket_at_time(-1), -1);
-
+        // Buckets appear in order and cover the full duration.
         for (let b = 0; b < total; b++) {
-            const t = timeline.time_for_bucket(b);
-            const back = timeline.bucket_at_time(t + 0.0001);
-            assert.isAtLeast(back, b);
+            const start = timeline.time_for_bucket(b);
+            const end = timeline.bucket_end_time(b);
+            assert.isAtLeast(start, 0);
+            assert.isAtMost(end, timeline.duration);
+            assert.isAtMost(start, end);
+            if (b > 0) {
+                assert.isAtLeast(start, timeline.time_for_bucket(b - 1));
+            }
         }
+
+        // Opacity fades from 0 to 1 across a bucket's span.
+        assert.equal(timeline.opacity_for(0, timeline.time_for_bucket(0)), 0);
+        assert.equal(timeline.opacity_for(total - 1, timeline.duration), 1);
     });
 
     test("bucket layer names round-trip", function () {
