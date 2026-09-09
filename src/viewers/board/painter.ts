@@ -19,6 +19,11 @@ import { EDAText, StrokeFont, TextAttributes } from "../../kicad/text";
 import { DocumentPainter, ItemPainter, StrokePainter } from "../base/painter";
 import { ViewLayerNames } from "../base/view-layers";
 import {
+    base_layer_name,
+    bucket_layer_name,
+    type LayoutTimeline,
+} from "./animation";
+import {
     CopperVirtualLayerNames,
     CopperLayerNames,
     LayerNames,
@@ -305,12 +310,13 @@ class ViaPainter extends NetNameItemPainter {
         }
 
         const color = layer.color;
+        const layer_name = base_layer_name(layer.name);
         if (
-            layer.name.endsWith("HoleWalls") ||
-            layer.name == ViewLayerNames.overlay
+            layer_name.endsWith("HoleWalls") ||
+            layer_name == ViewLayerNames.overlay
         ) {
             this.gfx.circle(new Circle(v.at.position, v.size / 2, color));
-        } else if (layer.name.endsWith("Holes")) {
+        } else if (layer_name.endsWith("Holes")) {
             this.gfx.circle(new Circle(v.at.position, v.drill / 2, color));
 
             // Draw start and end layer markers
@@ -369,7 +375,7 @@ class ZonePainter extends BoardItemPainter {
 
         for (const p of z.filled_polygons) {
             if (
-                !layer.name.includes(p.layer) &&
+                !base_layer_name(layer.name).includes(p.layer) &&
                 layer.name != ViewLayerNames.overlay
             ) {
                 continue;
@@ -453,14 +459,16 @@ class PadPainter extends NetNameItemPainter {
 
         const center = new Vec2(0, 0);
 
+        const layer_name = base_layer_name(layer.name);
+
         const is_hole_layer =
-            layer.name == LayerNames.pad_holes ||
-            layer.name == LayerNames.non_plated_holes;
+            layer_name == LayerNames.pad_holes ||
+            layer_name == LayerNames.non_plated_holes;
 
         const is_netname_layer =
-            layer.name == LayerNames.pads_front_netname ||
-            layer.name == LayerNames.pads_back_netname ||
-            layer.name == LayerNames.pad_holes_netname;
+            layer_name == LayerNames.pads_front_netname ||
+            layer_name == LayerNames.pads_back_netname ||
+            layer_name == LayerNames.pad_holes_netname;
 
         const net_name = PadPainter.pad_netname(pad);
 
@@ -754,7 +762,10 @@ class GrTextPainter extends BoardItemPainter {
 
         edatext.attributes.color = layer.color;
 
-        if (!is_manufacturing_layer(layer.name) && this.gfx.state.flipped) {
+        if (
+            !is_manufacturing_layer(base_layer_name(layer.name)) &&
+            this.gfx.state.flipped
+        ) {
             // TODO: donot flip text in non-manufacturing layers
         }
 
@@ -1195,7 +1206,7 @@ class FootprintPainter extends BoardItemPainter {
             const item_layers = this.view_painter.layers_for(item);
             if (
                 layer.name == ViewLayerNames.overlay ||
-                item_layers.includes(layer.name)
+                item_layers.includes(base_layer_name(layer.name))
             ) {
                 this.view_painter.paint_item(layer, item);
             }
@@ -1232,6 +1243,52 @@ export class BoardPainter extends DocumentPainter {
     // Used to filter out items by net when highlighting nets. Painters
     // should use this to determine whether to draw or skip the current item.
     filter_net: number | null = null;
+
+    /**
+     * When set, animatable items are painted into per-bucket layers instead
+     * of their regular layers, so the layout animation can reveal them over
+     * time by toggling bucket layer visibility.
+     */
+    timeline: LayoutTimeline | null = null;
+
+    protected override layer_name_for(
+        item: unknown,
+        layer_name: string,
+    ): string {
+        if (!this.timeline) {
+            return layer_name;
+        }
+
+        const bucket = this.timeline.bucket_for(item, layer_name);
+
+        if (bucket == null) {
+            return layer_name;
+        }
+
+        const name = bucket_layer_name(layer_name, bucket);
+
+        // Bucket layers are created lazily, right after their parent layer
+        // so they share its position in the rendering order.
+        if (!this.layers.by_name(name)) {
+            const parent = this.layers.by_name(layer_name);
+            if (!parent) {
+                return layer_name;
+            }
+            const timeline = this.timeline;
+            this.layers.add_after(
+                layer_name,
+                new ViewLayer(
+                    this.layers,
+                    name,
+                    () => parent.visible && timeline.current_bucket >= bucket,
+                    parent.interactive,
+                    parent.color,
+                ),
+            );
+        }
+
+        return name;
+    }
 
     paint_net(board: board_items.KicadPCB, net: number) {
         const layer = this.layers.overlay;
