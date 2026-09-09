@@ -17,8 +17,8 @@ import {
  * Virtual file system interface.
  *
  * This is the interface used by <kc-kicanvas-shell> to find and load files.
- * It's implemented using Drag and Drop and GitHub to provide a common interface
- * for interacting and loading files.
+ * It's implemented using Drag and Drop and local file picking to provide a
+ * common interface for interacting and loading files.
  */
 export interface IFileSystem {
     /** List all files */

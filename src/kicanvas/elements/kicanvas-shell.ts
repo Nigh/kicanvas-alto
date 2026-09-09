@@ -11,9 +11,7 @@ import { CSS, attribute, html, query } from "../../base/web-components";
 import { KCUIElement, KCUIIconElement } from "../../kc-ui";
 import { sprites_url } from "../icons/sprites";
 import { Project } from "../project";
-import { GitHubFileSystem } from "../services/github-vfs";
-import { CodebergFileSystem } from "../services/codeberg-vfs";
-import { FetchFileSystem, type IFileSystem } from "../services/vfs";
+import type { IFileSystem } from "../services/vfs";
 import { KCBoardAppElement } from "./kc-board/app";
 import { KCSchematicAppElement } from "./kc-schematic/app";
 
@@ -71,63 +69,14 @@ class KiCanvasShellElement extends KCUIElement {
     @attribute({ type: Boolean })
     public loaded: boolean;
 
-    @attribute({ type: String })
-    public src: string;
-
-    @query(`input[name="link"]`, true)
-    public link_input: HTMLInputElement;
-
     @query(`button[name="open_local"]`, true)
     public open_file_button: HTMLButtonElement;
 
     override initialContentCallback() {
-        const url_params = new URLSearchParams(document.location.search);
-
-        const urls = [
-            ...url_params.getAll("github"),
-            ...url_params.getAll("repo"),
-        ];
-
-        // Only load the first URL
-        const url = urls[0];
-
         later(async () => {
-            if (this.src) {
-                const vfs = new FetchFileSystem([this.src]);
-                await this.setup_project(vfs);
-                return;
-            }
-
-            if (url) {
-                const vfs = await this.load_repo(url);
-                if (!vfs) {
-                    return;
-                }
-
-                await this.setup_project(vfs);
-                return;
-            }
-
             new DropTarget(this, async (fs) => {
                 await this.setup_project(fs);
             });
-        });
-
-        this.link_input.addEventListener("input", async (e) => {
-            const link = this.link_input.value;
-            const vfs = await this.load_repo(link);
-
-            if (!vfs) {
-                // TODO: show error message: invaild URL
-                console.error(`Invalid URL: ${link}`);
-                return;
-            }
-
-            await this.setup_project(vfs);
-
-            const location = new URL(window.location.href);
-            location.searchParams.set("repo", link);
-            window.history.pushState(null, "", location);
         });
 
         this.open_file_button.addEventListener("click", async (e) => {
@@ -135,13 +84,6 @@ class KiCanvasShellElement extends KCUIElement {
                 await this.setup_project(vfs);
             });
         });
-    }
-
-    private async load_repo(url: string): Promise<IFileSystem | null> {
-        return (
-            (await GitHubFileSystem.fromURLs(url)) ??
-            (await CodebergFileSystem.fromURLs(url))
-        );
     }
 
     private async setup_project(vfs: IFileSystem) {
@@ -193,15 +135,9 @@ class KiCanvasShellElement extends KCUIElement {
                             report any bugs</a
                         >!
                     </p>
-                    <input
-                        name="link"
-                        type="text"
-                        placeholder="Paste a GitHub/Codeberg link..."
-                        autofocus />
                     <p>
-                        or drag & drop your KiCad files, or<button
-                            name="open_local"
-                            class="link_button">
+                        Drag & drop your KiCad files, or
+                        <button name="open_local" class="link_button">
                             open from local
                         </button>
                     </p>
