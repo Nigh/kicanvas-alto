@@ -188,10 +188,26 @@ export class BoardViewer extends DocumentViewer<
         return new LayerSet(this.board, this.theme);
     }
     public override paint() {
+        const order = this.layers
+            ? Array.from(
+                  (this.layers as LayerSet).in_ui_order(),
+                  (layer) => layer.name,
+              )
+            : null;
         super.paint();
-        if (this.layers) {
-            this.apply_object_opacities();
+        if (!this.layers) return;
+        const available = Array.from(
+            (this.layers as LayerSet).in_ui_order(),
+            (layer) => layer.name,
+        );
+        if (
+            order &&
+            order.length === available.length &&
+            order.every((name) => available.includes(name))
+        ) {
+            (this.layers as LayerSet).set_ui_order(order);
         }
+        this.apply_object_opacities();
     }
 
     protected override get grid_origin() {

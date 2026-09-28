@@ -54,7 +54,7 @@ export class KCBoardLayersPanelElement extends KCUIElement {
     viewer: BoardViewer;
 
     @query("kc-ui-panel-body", true)
-    private panel_body!: KCUIPanelBodyElement;
+    declare private panel_body: KCUIPanelBodyElement;
 
     private get items(): KCBoardLayerControlElement[] {
         return Array.from(
@@ -63,7 +63,51 @@ export class KCBoardLayersPanelElement extends KCUIElement {
     }
 
     @query("#presets", true)
-    private presets_menu!: KCUIMenuElement;
+    declare private presets_menu: KCUIMenuElement;
+
+    #dragged: KCBoardLayerControlElement | null = null;
+    #drag_start_y = 0;
+    #grab_offset = 0;
+    #drag_active = false;
+    #suppress_click = false;
+
+    private layout_top(n: HTMLElement) {
+        const transform = getComputedStyle(n).transform;
+        return (
+            n.getBoundingClientRect().top -
+            (transform === "none" ? 0 : new DOMMatrixReadOnly(transform).m42)
+        );
+    }
+
+    private move_item(item: KCBoardLayerControlElement, y: number) {
+        const others = this.items.filter((n) => n !== item);
+        const before = others.find(
+            (n) => y < this.layout_top(n) + n.offsetHeight / 2,
+        );
+        const anchor = before ?? this.presets_menu.previousElementSibling;
+        if (item.nextElementSibling === anchor) {
+            return;
+        }
+        const positions = new Map(others.map((n) => [n, this.layout_top(n)]));
+        this.panel_body.insertBefore(item, anchor);
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            for (const n of others) {
+                const delta = positions.get(n)! - this.layout_top(n);
+                if (delta) {
+                    n.getAnimations().forEach((animation) =>
+                        animation.cancel(),
+                    );
+                    n.animate(
+                        [
+                            { transform: `translateY(${delta}px)` },
+                            { transform: "none" },
+                        ],
+                        { duration: 160, easing: "ease-out" },
+                    );
+                }
+            }
+        }
+    }
 
     #color_throttle = {
         last: 0,
@@ -116,6 +160,107 @@ export class KCBoardLayersPanelElement extends KCUIElement {
     }
 
     override initialContentCallback() {
+        this.panel_body.addEventListener("pointerdown", (e) => {
+            if (e.button !== 0) return;
+            const path = e.composedPath();
+            if (
+                !path.some(
+                    (n) =>
+                        n instanceof HTMLElement &&
+                        (n.classList.contains("reorder") ||
+                            n.classList.contains("focus")),
+                )
+            ) {
+                return;
+            }
+            this.#dragged = path.find(
+                (n) => n instanceof KCBoardLayerControlElement,
+            ) as KCBoardLayerControlElement;
+            this.#drag_start_y = e.clientY;
+            this.#grab_offset = e.clientY - this.layout_top(this.#dragged);
+        });
+        this.panel_body.addEventListener("pointermove", (e) => {
+            const item = this.#dragged;
+            if (!item || !(e.buttons & 1)) return;
+            if (!this.#drag_active) {
+                if (Math.abs(e.clientY - this.#drag_start_y) < 5) return;
+                this.#drag_active = true;
+                this.panel_body.setPointerCapture(e.pointerId);
+                item.setAttribute("dragging", "");
+            }
+            e.preventDefault();
+            this.move_item(item, e.clientY);
+            item.style.transform = `translateY(${e.clientY - this.#grab_offset - this.layout_top(item)}px)`;
+        });
+        this.panel_body.addEventListener("pointerup", () => {
+            const item = this.#dragged;
+            if (!item) return;
+            if (this.#drag_active) {
+                (this.viewer.layers as LayerSet).set_ui_order(
+                    this.items.map((n) => n.layer_name),
+                );
+                this.viewer.draw();
+                this.#suppress_click = true;
+                window.setTimeout(() => (this.#suppress_click = false), 0);
+            }
+            item.style.transform = "";
+            item.removeAttribute("dragging");
+            this.#dragged = null;
+            this.#drag_active = false;
+        });
+        this.panel_body.addEventListener("pointercancel", () => {
+            if (!this.#dragged) return;
+            this.#dragged.style.transform = "";
+            this.#dragged.removeAttribute("dragging");
+            for (const layer of this.viewer.layers.in_ui_order()) {
+                const item = this.items.find(
+                    (n) => n.layer_name === layer.name,
+                )!;
+                this.panel_body.insertBefore(
+                    item,
+                    this.presets_menu.previousElementSibling,
+                );
+            }
+            this.#dragged = null;
+            this.#drag_active = false;
+        });
+        this.panel_body.addEventListener(
+            "click",
+            (e) => {
+                if (!this.#suppress_click) return;
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                this.#suppress_click = false;
+            },
+            true,
+        );
+        this.panel_body.addEventListener("keydown", (e) => {
+            if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+            const handle = e
+                .composedPath()
+                .find(
+                    (n) =>
+                        n instanceof HTMLElement &&
+                        n.classList.contains("reorder"),
+                );
+            if (!handle) return;
+            const item = ((handle as HTMLElement).getRootNode() as ShadowRoot)
+                .host as KCBoardLayerControlElement;
+            const items = this.items;
+            const index = items.indexOf(item);
+            const next = index + (e.key === "ArrowUp" ? -1 : 1);
+            if (next < 0 || next >= items.length) return;
+            e.preventDefault();
+            this.panel_body.insertBefore(
+                item,
+                e.key === "ArrowUp" ? items[next]! : items[next]!.nextSibling,
+            );
+            (this.viewer.layers as LayerSet).set_ui_order(
+                this.items.map((n) => n.layer_name),
+            );
+            this.viewer.draw();
+        });
+
         // Highlight layer when its control list item is clicked
         this.panel_body.addEventListener(
             KCBoardLayerControlElement.select_event,
@@ -291,6 +436,13 @@ class KCBoardLayerControlElement extends KCUIElement {
                 align-items: center;
             }
 
+            :host([dragging]) {
+                position: relative;
+                z-index: 1;
+                background: var(--list-item-active-bg);
+                box-shadow: 0 3px 10px rgb(0 0 0 / 20%);
+            }
+
             button {
                 all: unset;
                 box-sizing: border-box;
@@ -302,6 +454,18 @@ class KCBoardLayerControlElement extends KCUIElement {
 
             button:focus-visible {
                 outline: var(--input-focus-outline);
+            }
+
+            .reorder {
+                flex: 0 0 1.5em;
+                justify-content: center;
+                color: var(--list-item-disabled-fg);
+                cursor: grab;
+                touch-action: none;
+            }
+
+            .reorder:active {
+                cursor: grabbing;
             }
 
             .color {
@@ -328,6 +492,7 @@ class KCBoardLayerControlElement extends KCUIElement {
             .focus {
                 flex: 1 1 auto;
                 min-width: 0;
+                touch-action: none;
             }
 
             .name {
@@ -441,19 +606,26 @@ class KCBoardLayerControlElement extends KCUIElement {
     }
 
     @attribute({ type: String })
-    public layer_name: string;
+    declare layer_name: string;
 
     @attribute({ type: String })
-    public layer_color: string;
+    declare layer_color: string;
 
     @attribute({ type: Boolean })
-    public layer_highlighted: boolean;
+    declare layer_highlighted: boolean;
 
     @attribute({ type: Boolean })
-    public layer_visible: boolean;
+    declare layer_visible: boolean;
 
     override render() {
-        return html`<input
+        return html`<button
+                class="reorder"
+                type="button"
+                aria-label="Move ${this.layer_name}; use arrow keys to reorder"
+                title="Drag or use arrow keys to reorder">
+                <kc-ui-icon>drag_indicator</kc-ui-icon>
+            </button>
+            <input
                 class="color"
                 type="color"
                 aria-label="Color for ${this.layer_name}"

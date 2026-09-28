@@ -67,6 +67,7 @@ export class CustomElement extends HTMLElement {
      * renderRoot.
      */
     connectedCallback(): void | undefined {
+        if (this.shadowRoot) return;
         this.#renderInitialContent();
     }
 
