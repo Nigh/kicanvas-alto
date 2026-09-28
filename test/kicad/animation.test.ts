@@ -182,16 +182,16 @@ suite("board.animation.LayoutTimeline", function () {
     });
     test("render order follows the current Layers menu order", function () {
         const pcb = new board.KicadPCB("test.kicad_pcb", zones_pcb_src);
-        class ReorderedLayerSet extends LayerSet {
-            reversed = false;
-            override *in_ui_order() {
-                const layers = Array.from(super.in_ui_order());
-                yield* this.reversed ? layers.reverse() : layers;
-            }
-        }
-        const layers = new ReorderedLayerSet(pcb, kicad_theme.board);
+        const layers = new LayerSet(pcb, kicad_theme.board);
         for (const reversed of [false, true]) {
-            layers.reversed = reversed;
+            if (reversed) {
+                layers.set_ui_order(
+                    Array.from(
+                        layers.in_ui_order(),
+                        (layer) => layer.name,
+                    ).reverse(),
+                );
+            }
             const menu_order = Array.from(
                 layers.in_ui_order(),
                 (layer) => layer.name,
@@ -203,7 +203,7 @@ suite("board.animation.LayoutTimeline", function () {
             ).filter((name) => menu_names.has(name));
             assert.deepEqual(rendered_order, menu_order.reverse());
         }
-        layers.by_name(LayerNames.b_cu)!.highlighted = true;
+        layers.highlight(LayerNames.b_cu);
         const menu_order = Array.from(
             layers.in_ui_order(),
             (layer) => layer.name,
@@ -213,7 +213,12 @@ suite("board.animation.LayoutTimeline", function () {
             Array.from(layers.in_display_order(), (layer) => layer.name).filter(
                 (name) => menu_names.has(name),
             ),
-            menu_order.reverse(),
+            [
+                ...menu_order
+                    .filter((name) => name !== LayerNames.b_cu)
+                    .reverse(),
+                LayerNames.b_cu,
+            ],
         );
     });
 

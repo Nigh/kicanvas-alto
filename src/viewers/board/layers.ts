@@ -284,6 +284,20 @@ export function* copper_layers_between(
  * Board view layer set
  */
 export class LayerSet extends BaseLayerSet {
+    #ui_order?: string[];
+
+    set_ui_order(names: string[]) {
+        const current = Array.from(this.in_ui_order(), (layer) => layer.name);
+        if (
+            names.length !== current.length ||
+            new Set(names).size !== current.length ||
+            names.some((name) => !current.includes(name))
+        ) {
+            throw new Error("Layer order must contain every menu layer once");
+        }
+        this.#ui_order = [...names];
+    }
+
     /**
      * Create a new LayerSet
      */
@@ -490,18 +504,12 @@ export class LayerSet extends BaseLayerSet {
         }
     }
 
-    /** Board highlighting dims other layers without changing menu Z-order. */
-    override *in_display_order() {
-        yield* Array.from(this.in_order()).reverse();
-        yield this.overlay;
-    }
-
     /**
      * @yields layers that correspond to board layers that should be
      *      displayed in the layer selection UI
      */
     *in_ui_order() {
-        const order = [
+        const order = this.#ui_order ?? [
             ...CopperLayerNames,
             LayerNames.f_adhes,
             LayerNames.b_adhes,
