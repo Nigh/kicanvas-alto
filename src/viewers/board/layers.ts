@@ -595,6 +595,10 @@ export class LayerSet extends BaseLayerSet {
                     break;
             }
         }
+        if (preset === "physical") {
+            this.by_name(LayerNames.grid)!.visible = false;
+            this.by_name(LayerNames.drawing_sheet)!.visible = false;
+        }
     }
 
     *copper_layers() {

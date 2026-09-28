@@ -389,6 +389,8 @@ suite("board layer presets", function () {
         assert.isFalse(layers.by_name(LayerNames.f_fab)!.visible);
         assert.isFalse(layers.by_name(LayerNames.dwgs_user)!.visible);
         assert.isFalse(layers.by_name(LayerNames.user_1)!.visible);
+        assert.isFalse(layers.by_name(LayerNames.grid)!.visible);
+        assert.isFalse(layers.by_name(LayerNames.drawing_sheet)!.visible);
     });
 });
 
