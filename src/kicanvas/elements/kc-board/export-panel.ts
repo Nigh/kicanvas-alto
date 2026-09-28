@@ -10,7 +10,7 @@ import { BBox, Vec2 } from "../../../base/math";
 import { css, html } from "../../../base/web-components";
 import { KiCanvasLoadEvent } from "../../../viewers/base/events";
 import { KCUIElement } from "../../../kc-ui";
-import { LayerSet } from "../../../viewers/board/layers";
+import { LayerNames, LayerSet } from "../../../viewers/board/layers";
 import {
     export_board_svg,
     export_layout_animation_svg,
@@ -349,23 +349,24 @@ export class KCBoardExportPanelElement extends KCUIElement {
     private async export_video() {
         const layers = this.viewer.layers as LayerSet;
         const visibility = new Map(
-            Array.from(layers.in_ui_order(), (layer) => [
-                layer.name,
-                layer.visible,
-            ]),
+            [
+                ...layers.in_ui_order(),
+                layers.by_name(LayerNames.grid)!,
+                layers.by_name(LayerNames.drawing_sheet)!,
+            ].map((layer) => [layer.name, layer.visible]),
         );
         const existing_animation = this.viewer.layout_animation;
-        layers.apply_preset("physical");
         const animation =
             existing_animation ?? this.viewer.enable_layout_animation();
+        const recording_layers = this.viewer.layers as LayerSet;
+        recording_layers.apply_preset("physical");
 
         try {
             const file = await animation?.record_video();
             if (file) initiate_download(file);
         } finally {
-            for (const layer of layers.in_ui_order()) {
-                const visible = visibility.get(layer.name);
-                if (visible !== undefined) layer.visible = visible;
+            for (const [name, visible] of visibility) {
+                recording_layers.by_name(name)!.visible = visible;
             }
             if (!existing_animation) {
                 this.viewer.disable_layout_animation();

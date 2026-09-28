@@ -15,7 +15,7 @@ import { KiCanvasLoadEvent } from "../../../viewers/base/events";
 import { css, html } from "../../../base/web-components";
 import { KCUIElement, type KCUIRangeElement } from "../../../kc-ui";
 import type { LayoutAnimationController } from "../../../viewers/board/animation";
-import { LayerSet } from "../../../viewers/board/layers";
+import { LayerNames, LayerSet } from "../../../viewers/board/layers";
 import type { BoardViewer } from "../../../viewers/board/viewer";
 
 export class KCBoardAnimationPanelElement extends KCUIElement {
@@ -132,6 +132,8 @@ export class KCBoardAnimationPanelElement extends KCUIElement {
         if (!this.animation) {
             this.animation = this.viewer.enable_layout_animation();
             if (this.animation) {
+                (this.viewer.layers as LayerSet).apply_preset("physical");
+                this.viewer.draw();
                 this.animation.on_change = () => this.update_ui();
             }
         }
@@ -143,10 +145,11 @@ export class KCBoardAnimationPanelElement extends KCUIElement {
 
         const layers = this.viewer.layers as LayerSet;
         this.#saved_layer_visibility = new Map(
-            Array.from(layers.in_ui_order(), (layer) => [
-                layer.name,
-                layer.visible,
-            ]),
+            [
+                ...layers.in_ui_order(),
+                layers.by_name(LayerNames.grid)!,
+                layers.by_name(LayerNames.drawing_sheet)!,
+            ].map((layer) => [layer.name, layer.visible]),
         );
         layers.apply_preset("physical");
         this.viewer.draw();
@@ -156,9 +159,8 @@ export class KCBoardAnimationPanelElement extends KCUIElement {
         const saved_visibility = this.#saved_layer_visibility;
         if (saved_visibility) {
             const layers = this.viewer.layers as LayerSet;
-            for (const layer of layers.in_ui_order()) {
-                const visible = saved_visibility.get(layer.name);
-                if (visible !== undefined) layer.visible = visible;
+            for (const [name, visible] of saved_visibility) {
+                layers.by_name(name)!.visible = visible;
             }
             this.#saved_layer_visibility = null;
         }
